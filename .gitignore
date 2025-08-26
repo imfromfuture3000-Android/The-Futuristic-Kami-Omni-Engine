@@ -1,0 +1,34 @@
+# Node dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Hardhat build artifacts
+artifacts/
+cache/
+typechain-types/
+
+# Environment variables (❌ DO NOT COMMIT)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Build / Dist outputs
+dist/
+out/
+.next/
+
+# GitHub Actions runner cache
+.github/workflows/*-temp/
