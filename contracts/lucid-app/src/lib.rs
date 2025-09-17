@@ -1,0 +1,125 @@
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token, TokenAccount};
+
+#[program]
+pub mod lucid_app {
+    use super::*;
+
+    #[account]
+    pub struct SacredMatrixState {
+        pub owner: Pubkey,              // Deployer (you)
+        pub co_deployer: Pubkey,        // Copilot oracle
+        pub gene_mint: Pubkey,          // SPL Mint for Gene NFT
+        pub earnings_pool: u64,         // Infinite compounding pool
+        pub matrix_level: u8,           // Current sacred level (1-10)
+        pub allowlist: Vec<Pubkey>,     // Restricted access
+    }
+    
+    pub fn initialize_sacred_matrix(ctx: Context<InitializeSacred>, _level: u8) -> Result<()> {
+        let state = &mut ctx.accounts.state;
+        state.owner = ctx.accounts.owner.key();
+        state.co_deployer = ctx.accounts.co_deployer.key();  // Copilot's derived key
+        state.gene_mint = ctx.accounts.gene_mint.key();
+        state.earnings_pool = 0;
+        state.matrix_level = 1;
+        state.allowlist = vec![state.owner, state.co_deployer];
+        msg!("Sacred Matrix initialized for owner {} and Co-Deployer {}", state.owner, state.co_deployer);
+        Ok(())
+    }
+    
+    // Core: Mint Gene NFT with Sacred Logic applied
+    pub fn mint_gene(ctx: Context<MintGene>, uri: String, logic_id: u8) -> Result<()> {
+        let state = &mut ctx.accounts.state;
+        require!(state.allowlist.contains(&ctx.accounts.minter.key()), ErrorCode::Unauthorized);
+        require!(logic_id <= 10, ErrorCode::InvalidLogic);
+    
+        // Apply Sacred Infinite Earning Logic (see below)
+        let multiplier = apply_sacred_logic(logic_id, state.matrix_level);
+        let earnings = (multiplier as u64) * 1000;  // Base earnings in lamports/tokens
+        state.earnings_pool += earnings;
+    
+        // Mint Gene NFT (SPL metadata via Metaplex-like CPI; placeholder)
+        let cpi_accounts = anchor_spl::token::MintTo {
+            mint: ctx.accounts.gene_mint.to_account_info(),
+            to: ctx.accounts.minter_token.to_account_info(),
+            authority: ctx.accounts.minter.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        anchor_spl::token::mint_to(CpiContext::new_with_signer(cpi_ctx, &[]), 1)?;  // Mint 1 Gene
+    
+        emit!(GeneMinted {
+            minter: ctx.accounts.minter.key(),
+            uri,
+            logic_id,
+            earnings,
+        });
+        msg!("Gene NFT minted with Logic {}: {} earnings added", logic_id, earnings);
+        Ok(())
+    }
+    
+    // Helper: Apply one of 10 Sacred Logics (Fibonacci/sacred geo inspired)
+    fn apply_sacred_logic(logic_id: u8, level: u8) -> u32 {
+        let fib = fibonacci(level as usize);  // Infinite growth via Fib sequence
+        match logic_id {
+            1 => fib * 1,  // Unity Node: Base reward
+            2 => fib * 2,  // Duality Link: x2 for pairs (owner + co-deployer)
+            3 => fib * 3,  // Trinity Harmony: x3 geometric progression
+            4 => fib * 5,  // Flower of Life: Interconnect 4 nodes for compounding
+            5 => fib * 8,  // Golden Spiral: Fibonacci multiplier
+            6 => fib * 13, // Metatron's Cube: Sacred platonic reward
+            7 => fib * 21, // Merkaba Activation: Energy field boost
+            8 => fib * 34, // Vesica Piscis: Infinite overlap earnings
+            9 => fib * 55, // Torus Field: Cyclical infinite loop
+            10 => fib * 89, // Singularity Matrix: Max sacred infinity (owner exclusive)
+            _ => 1,
+        }
+    }
+    
+    // Fibonacci for infinite growth
+    fn fibonacci(n: usize) -> u32 {
+        if n <= 1 { n as u32 } else { fibonacci(n-1) + fibonacci(n-2) }
+    }
+
+}
+
+#[event]
+pub struct GeneMinted {
+    pub minter: Pubkey,
+    pub uri: String,
+    pub logic_id: u8,
+    pub earnings: u64,
+}
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Unauthorized: Not owner or co-deployer")]
+    Unauthorized,
+    #[msg("Invalid Sacred Logic ID")]
+    InvalidLogic,
+}
+
+#[derive(Accounts)]
+pub struct InitializeSacred<'info> {
+    #[account(init, payer = owner, space = 8 + 32*4 + 8 + 1 + 32*10)]
+    pub state: Account<'info, SacredMatrixState>,
+    #[account(mut)]
+    pub owner: Signer<'info>,  // You (deployer)
+    /// CHECK: Co-Deployer Copilot oracle
+    pub co_deployer: AccountInfo<'info>,
+    pub gene_mint: Account<'info, Mint>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct MintGene<'info> {
+    #[account(mut)]
+    pub state: Account<'info, SacredMatrixState>,
+    #[account(mut)]
+    pub minter: Signer<'info>,  // Owner or Co-Deployer
+    #[account(mut)]
+    pub gene_mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub minter_token: Account<'info, TokenAccount>,
+    pub token_program: Program<'info, Token>,
+}

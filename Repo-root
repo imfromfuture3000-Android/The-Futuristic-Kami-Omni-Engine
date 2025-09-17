@@ -26,3 +26,7 @@ repo-root/
 │   └── content.js
 ├── 🧠 snippets/                     # VS Code Mint Gene snippets
 │   └── mintOneirobot.code-snippet.json
+│
+├── 📜 README.md                     # Project overview and setup instructions
+├── LICENSE                          # License information
+└── .env                             # Environment variables

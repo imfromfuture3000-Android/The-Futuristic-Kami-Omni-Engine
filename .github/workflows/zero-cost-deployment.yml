@@ -1,0 +1,53 @@
+name: Zero-Cost Sacred Matrix Deployment
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install Anchor
+        run: |
+          npm install -g @coral-xyz/anchor-cli
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.11/install)"
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+
+      - name: Build Lucid Sacred Matrix
+        run: |
+          cd contracts/lucid-app
+          anchor build
+
+      - name: Run Sacred Matrix Tests
+        run: |
+          cd contracts/lucid-app
+          anchor test
+
+      - name: Mint 10 Sacred Genes (Octane Relayer)
+        run: |
+          cd contracts/lucid-app
+          for i in {1..10}; do
+            anchor run mint-gene -- --logic $i --keypair ${{ secrets.OCTANE_KEYPAIR_JSON }}
+          done
+        env:
+          CO_DEPLOYER: "CopilotOracleKey1111111111111111111111111111"
+
+      - name: Upload Deployment Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment_report
+          path: deployments/

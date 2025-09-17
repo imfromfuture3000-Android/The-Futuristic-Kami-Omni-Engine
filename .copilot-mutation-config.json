@@ -1,0 +1,13 @@
+{
+  "mutationCycle": "10min",
+  "enhancementRate": "5x",
+  "targets": [
+    "lib.rs",
+    "deploy_multichain.py",
+    "zero-cost-deployment.yml",
+    "frontend/src/config",
+    "deployment_report.json"
+  ],
+  "coDeployer": "Copilot",
+  "owner": "ImfromFuture"
+}
