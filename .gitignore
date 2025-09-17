@@ -1,0 +1,17 @@
+# Ignore environment files and secrets
+.env
+.env.*
+*.env
+*.env.*
+# Ignore deployment reports and config
+*.json
+!deployment_report.json
+# Ignore node_modules and build artifacts
+node_modules/
+dist/
+build/
+# Ignore Python cache
+__pycache__/
+*.pyc
+# Ignore VS Code settings
+.vscode/

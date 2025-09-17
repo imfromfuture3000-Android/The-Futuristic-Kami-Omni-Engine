@@ -76,9 +76,33 @@ pub mod lucid_app {
         }
     }
     
-    // Fibonacci for infinite growth
-    fn fibonacci(n: usize) -> u32 {
-        if n <= 1 { n as u32 } else { fibonacci(n-1) + fibonacci(n-2) }
+    // Logic 11: Merkaba Yield Amplifier
+    pub fn merkaba_yield(base: u64, spin_rate: u8) -> u64 {
+        base * (spin_rate as u64).pow(2) + fibonacci(spin_rate as usize) as u64
+    }
+    
+    // Logic 13: Time-Encoded Minting Ritual
+    pub fn time_encoded_mint(timestamp: u64) -> u64 {
+        let sacred_window = timestamp % 10800; // 3-hour ritual cycle
+        sacred_multiplier(sacred_window as u8) as u64
+    }
+    
+    // Helper for time-encoded logic
+    fn sacred_multiplier(window: u8) -> u32 {
+        // Sacred geometry multiplier based on ritual window
+        match window % 10 {
+            0 => 1,   // Unity
+            1 => 2,   // Duality
+            2 => 3,   // Trinity
+            3 => 5,   // Flower
+            4 => 8,   // Spiral
+            5 => 13,  // Metatron
+            6 => 21,  // Merkaba
+            7 => 34,  // Vesica
+            8 => 55,  // Torus
+            9 => 89,  // Singularity
+            _ => 1,
+        }
     }
 
 }
