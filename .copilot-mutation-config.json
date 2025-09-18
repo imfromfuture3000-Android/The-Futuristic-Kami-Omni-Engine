@@ -1,13 +1,45 @@
 {
   "mutationCycle": "10min",
   "enhancementRate": "5x",
+  "mcpServer": {
+    "enabled": true,
+    "advancedFixing": true,
+    "upgradeLogic": true,
+    "autoEnhancement": true,
+    "mutationTriggers": [
+      "code_quality_issues",
+      "performance_bottlenecks",
+      "security_vulnerabilities",
+      "logic_errors",
+      "optimization_opportunities"
+    ],
+    "enhancementModules": [
+      "error_correction",
+      "performance_optimizer",
+      "security_hardener",
+      "logic_enhancer",
+      "code_refactor"
+    ]
+  },
   "targets": [
     "lib.rs",
     "deploy_multichain.py",
     "zero-cost-deployment.yml",
     "frontend/src/config",
-    "deployment_report.json"
+    "deployment_report.json",
+    "scripts/*.js",
+    "scripts/*.py",
+    "extensions/*.js",
+    "extensions/*.json"
   ],
   "coDeployer": "Copilot",
-  "owner": "ImfromFuture"
+  "owner": "ImfromFuture",
+  "mutationEngine": {
+    "version": "2.0",
+    "aiModel": "gpt-4-turbo",
+    "confidenceThreshold": 0.85,
+    "maxConcurrentMutations": 5,
+    "rollbackEnabled": true,
+    "testingEnabled": true
+  }
 }

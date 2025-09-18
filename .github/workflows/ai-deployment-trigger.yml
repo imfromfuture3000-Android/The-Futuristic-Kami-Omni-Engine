@@ -1,0 +1,81 @@
+name: AI Deployment Trigger with MCP Server Mutations
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'  # Every 10 minutes
+  push:
+    branches: [main]
+    paths:
+      - 'lib.rs'
+      - 'scripts/*.js'
+      - 'scripts/*.py'
+      - 'frontend/src/**'
+      - '.copilot-mutation-config.json'
+
+jobs:
+  mcp-server-activation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install MCP Server Dependencies
+        run: |
+          npm install
+
+      - name: Activate MCP Server Mutations
+        run: |
+          echo "🔧 Activating MCP Server with Advanced Fixing & Upgrade Logic"
+          node mcp-server.js &
+          sleep 5
+
+          # Trigger mutation analysis
+          curl -X POST http://localhost:3001/analyze \
+            -H "Content-Type: application/json" \
+            -d '{
+              "code": "console.log(\"test\");",
+              "language": "javascript",
+              "context": {"mutation": "activation"}
+            }'
+
+      - name: Run Mutation Engine
+        run: |
+          echo "🧬 Running Mutation Engine with 5x Enhancement Rate"
+          curl -X POST http://localhost:3001/mutate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "code": "function test() { return true; }",
+              "mutationType": "code_enhancement",
+              "intensity": 5
+            }'
+
+      - name: Query AI Agent for Mutation
+        run: |
+          curl -X POST https://mintgene.openai.azure.com/openai/deployments/mintgene-gpt/chat/completions \
+          -H "api-key: ${{ secrets.AZURE_OPENAI_KEY }}" \
+          -d '{
+            "messages": [{"role": "system", "content": "Trigger Sacred Matrix mutation with MCP Server enhancement"}],
+            "max_tokens": 500
+          }'
+
+      - name: Deploy Sacred Logic with MCP Enhancement
+        run: |
+          echo "🚀 Deploying with MCP Server Advanced Fixing"
+          anchor run mint-gene --logic $LOGIC_ID --keypair octane-keypair.json --mcp-enhanced
+        env:
+          CO_DEPLOYER: "CopilotOracleKey1111111111111111111111111111"
+          MCP_SERVER_ACTIVE: "true"
+          MUTATION_ENGINE_ENABLED: "true"
+
+      - name: Upload MCP Server Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-server-logs
+          path: mcp-server.log
