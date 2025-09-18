@@ -3,15 +3,37 @@
 .env.*
 *.env
 *.env.*
+
 # Ignore deployment reports and config
 *.json
+!package.json
+!package-lock.json
+!next.config.js
+!tailwind.config.js
+!postcss.config.js
+!tsconfig.json
 !deployment_report.json
+
 # Ignore node_modules and build artifacts
 node_modules/
 dist/
 build/
+.next/
+logs/
+
 # Ignore Python cache
 __pycache__/
 *.pyc
+
 # Ignore VS Code settings
 .vscode/
+
+# Ignore Docker artifacts
+Dockerfile.scoop
+
+# Ignore Azure artifacts
+azure-deployment-report.json
+
+# Ignore temporary files
+*.tmp
+*.temp
