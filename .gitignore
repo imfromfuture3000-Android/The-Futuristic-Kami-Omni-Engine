@@ -13,6 +13,9 @@
 !postcss.config.js
 !tsconfig.json
 !deployment_report.json
+!mcp-server-config.json
+!azure-mcp-config.json
+!.copilot-mutation-config.json
 
 # Ignore node_modules and build artifacts
 node_modules/

@@ -1,0 +1,59 @@
+{
+  "azureMcp": {
+    "version": "2.0.0",
+    "enabled": true,
+    "port": 3002,
+    "enabledServices": [
+      "storage",
+      "keyvault",
+      "cosmosdb",
+      "functions",
+      "monitor",
+      "deployment"
+    ],
+    "sacredMatrix": {
+      "enabled": true,
+      "mutationRate": "5x",
+      "enhancementCycle": "10min"
+    },
+    "mutationCycle": "auto",
+    "enhancementRate": "adaptive",
+    "deployment": {
+      "mainnet": {
+        "enabled": true,
+        "autoScale": true,
+        "healthMonitoring": true,
+        "environments": {
+          "dashboard": {
+            "resourceGroup": "Dashboard-Mainnet-RG",
+            "location": "eastus",
+            "scalingPolicy": "auto",
+            "minInstances": 2,
+            "maxInstances": 10
+          }
+        }
+      }
+    }
+  },
+  "azure": {
+    "subscriptionId": "0c2af5d0-9660-47b1-8009-b44b89aa5962",
+    "resourceGroup": "OmegaPrime-RG",
+    "location": "eastus",
+    "services": {
+      "storage": {
+        "accountName": "omegaprimestore",
+        "containerName": "deployments"
+      },
+      "keyVault": {
+        "name": "omegaprime-kv"
+      },
+      "cosmosDb": {
+        "accountName": "omegaprime-cosmos",
+        "databaseName": "OmegaPrimeDB"
+      },
+      "functions": {
+        "appName": "omegaprime-functions"
+      }
+    }
+  }
+}
