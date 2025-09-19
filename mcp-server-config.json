@@ -1,0 +1,55 @@
+{
+  "serverConfig": {
+    "port": 3001,
+    "cors": {
+      "origin": ["http://localhost:3000", "https://*.azurewebsites.net"],
+      "credentials": true
+    }
+  },
+  "mcpServer": {
+    "version": "2.1.0",
+    "enabled": true,
+    "features": {
+      "codeAnalysis": true,
+      "autoFix": true,
+      "upgrade": true,
+      "mutation": true,
+      "optimization": true,
+      "dashboardDeployment": true
+    }
+  },
+  "azureIntegration": {
+    "enabled": true,
+    "services": {
+      "keyVault": {
+        "name": "omegaprime-kv",
+        "url": "https://omegaprime-kv.vault.azure.net/"
+      },
+      "storage": {
+        "account": "omegaprimestore",
+        "containerName": "deployments"
+      },
+      "cosmosDb": {
+        "account": "omegaprime-cosmos",
+        "database": "OmegaPrimeDB",
+        "container": "Deployments"
+      },
+      "functions": {
+        "name": "omegaprime-functions"
+      }
+    }
+  },
+  "deployment": {
+    "mainnet": {
+      "enabled": true,
+      "environments": {
+        "dashboard": {
+          "port": 3000,
+          "buildCommand": "npm run build",
+          "startCommand": "npm start",
+          "healthCheck": "/health"
+        }
+      }
+    }
+  }
+}
