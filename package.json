@@ -1,0 +1,38 @@
+{
+  "name": "futuristic-kami-omni-engine",
+  "version": "1.0.0",
+  "description": "The Futuristic Kami Omni Engine with Azure deployment capabilities",
+  "scripts": {
+    "azure:login": "node azure-login.js login",
+    "azure:login:device": "node azure-login.js device-code",
+    "azure:login:interactive": "node azure-login.js interactive",
+    "azure:status": "node azure-login.js status",
+    "azure:subscriptions": "node azure-login.js subscriptions",
+    "azure:logout": "node azure-login.js logout",
+    "azure:deploy:dashboard": "node azure-container-apps-deploy.js",
+    "azure:preflight": "node azure-preflight-check.js",
+    "azure:demo": "node azure-login-demo.js",
+    "dashboard:build": "cd dashboard && npm run build",
+    "dashboard:dev": "cd dashboard && npm run dev",
+    "dashboard:docker:build": "cd dashboard && docker build -t empire-dashboard .",
+    "azure:full:deploy": "npm run azure:deploy:dashboard"
+  },
+  "keywords": [
+    "azure",
+    "deployment",
+    "container-apps",
+    "dashboard",
+    "blockchain"
+  ],
+  "author": "Future3000",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@azure/arm-appservice": "^14.1.0",
+    "@azure/arm-resources": "^5.2.0",
+    "@azure/arm-storage": "^18.1.0",
+    "@azure/identity": "^4.0.1"
+  }
+}
