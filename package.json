@@ -1,0 +1,12 @@
+{
+  "name": "empire-engine-root",
+  "version": "1.0.0",
+  "description": "Empire Engine database testing utilities",
+  "scripts": {
+    "test-db": "node test-database-connection.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  }
+}
