@@ -1,0 +1,32 @@
+repo-root/
+├── 📄 _DEPLOYMENT.md                  # Canonical zero-cost deployment logic
+├── 📄 deployment_report.json          # Verified mainnet/testnet results
+├── 🚀 .github/workflows/             # CI/CD automation
+│   └── zero-cost-deployment.yml
+├── 📦 contracts/                     # Smart contracts (SKALE, Solana, EVM)
+│   ├── OneirobotNFT.sol
+│   └── lucid-app/src/lib.rs          # Sacred Matrix logic (Rust/Anchor)
+├── 🤖 agents/                        # Deployment agents
+│   ├── iem_syndicate.py
+│   └── solana_dream_agent.py
+├── 🔧 scripts/                       # Automation scripts
+│   ├── deploy_multichain.py
+│   ├── setup_relayers.py
+│   ├── verify_deployment.py
+│   └── generate_deployment_report.py
+├── 🌐 frontend/                      # React dApp
+│   ├── src/config/
+│   └── package.json
+├── 📊 deployments/                  # Deployment artifacts
+│   ├── skale_mainnet.json
+│   ├── solana_mainnet.json
+│   └── relayers/
+├── 🧩 extensions/                   # Chrome extension
+│   ├── manifest.json
+│   └── content.js
+├── 🧠 snippets/                     # VS Code Mint Gene snippets
+│   └── mintOneirobot.code-snippet.json
+│
+├── 📜 README.md                     # Project overview and setup instructions
+├── LICENSE                          # License information
+└── .env                             # Environment variables

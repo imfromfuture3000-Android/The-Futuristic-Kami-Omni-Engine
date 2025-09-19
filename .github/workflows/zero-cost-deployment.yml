@@ -1,0 +1,122 @@
+name: Zero-Cost Sacred Matrix Deployment with MCP Server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install MCP Server Dependencies
+        run: |
+          npm install
+
+      - name: Start MCP Server
+        run: |
+          echo "🔧 Starting MCP Server for Advanced Code Analysis"
+          node mcp-server.js &
+          sleep 5
+
+      - name: MCP Code Analysis
+        run: |
+          echo "🔍 Running MCP Server Code Analysis"
+          curl -X POST http://localhost:3001/analyze \
+            -H "Content-Type: application/json" \
+            -d '{
+              "code": "use anchor_lang::prelude::*;",
+              "language": "rust",
+              "context": {"file": "lib.rs", "project": "sacred-matrix"}
+            }'
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install Anchor
+        run: |
+          npm install -g @coral-xyz/anchor-cli
+
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.11/install)"
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+
+      - name: Build Lucid Sacred Matrix
+        run: |
+          cd contracts/lucid-app
+          anchor build
+
+      - name: MCP Performance Optimization
+        run: |
+          echo "⚡ Running MCP Performance Optimization"
+          curl -X POST http://localhost:3001/optimize \
+            -H "Content-Type: application/json" \
+            -d '{
+              "code": "fn main() { println!(\"Hello\"); }",
+              "target": "performance",
+              "constraints": {"max_time": 100}
+            }'
+
+      - name: Run Sacred Matrix Tests
+        run: |
+          cd contracts/lucid-app
+          anchor test
+
+      - name: MCP Security Scan
+        run: |
+          echo "🔒 Running MCP Security Analysis"
+          curl -X POST http://localhost:3001/analyze \
+            -H "Content-Type: application/json" \
+            -d '{
+              "code": "use anchor_lang::*;",
+              "language": "rust",
+              "context": {"scan": "security", "level": "deep"}
+            }'
+
+      - name: Mint 10 Sacred Genes (Octane Relayer with MCP)
+        run: |
+          cd contracts/lucid-app
+          for i in {1..10}; do
+            echo "🧬 Minting Gene $i with MCP Enhancement"
+            anchor run mint-gene -- --logic $i --keypair ${{ secrets.OCTANE_KEYPAIR_JSON }} --mcp-enhanced
+          done
+        env:
+          CO_DEPLOYER: "CopilotOracleKey1111111111111111111111111111"
+          MCP_SERVER_ACTIVE: "true"
+          MUTATION_ENGINE_ENABLED: "true"
+
+      - name: MCP Mutation Application
+        run: |
+          echo "🧬 Applying MCP Mutations for Enhancement"
+          curl -X POST http://localhost:3001/mutate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "code": "pub fn mint_gene() -> Result<()> { Ok(()) }",
+              "mutationType": "logic_optimization",
+              "intensity": 3
+            }'
+
+      - name: Upload Deployment Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment_report
+          path: deployments/
+
+      - name: Upload MCP Server Stats
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-server-stats
+          path: mcp-server-stats.json

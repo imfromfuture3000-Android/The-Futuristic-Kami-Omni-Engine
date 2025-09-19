@@ -1,34 +1,76 @@
-# Node dependencies
+# Helius and relayer secrets
+helius*
+# Ignore environment and secret files
+.env*
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+*.json
+!package.json
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Hardhat build artifacts
-artifacts/
-cache/
-typechain-types/
-
-# Environment variables (❌ DO NOT COMMIT)
-.env
-.env.local
-.env.*.local
-
-# Logs
+dist/
+build/
+target/
+coverage/
 *.log
+*.sqlite
+*.db
+*.bak
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+*.envrc
+*.code-workspace
+*.vscode/
+deployment_report.json
+deployment-failure-report.json
+*.local
+*.secret
+*.cache
+*.lock
+*.pyc
+__pycache__/# Ignore environment files and secrets
+.env
+.env.*
+*.env
+*.env.*
+
+# Ignore deployment reports and config
+*.json
+!package.json
+!package-lock.json
+!next.config.js
+!tailwind.config.js
+!postcss.config.js
+!tsconfig.json
+!deployment_report.json
+!mcp-server-config.json
+!azure-mcp-config.json
+!.copilot-mutation-config.json
+
+# Ignore node_modules and build artifacts
+node_modules/
+dist/
+build/
+.next/
 logs/
 
-# OS / Editor junk
-.DS_Store
-Thumbs.db
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore VS Code settings
 .vscode/
-.idea/
-*.swp
 
-# Build / Dist outputs
-dist/
-out/
-.next/
+# Ignore Docker artifacts
+Dockerfile.scoop
 
-# GitHub Actions runner cache
-.github/workflows/*-temp/
+# Ignore Azure artifacts
+azure-deployment-report.json
+
+# Ignore temporary files
+*.tmp
+*.temp

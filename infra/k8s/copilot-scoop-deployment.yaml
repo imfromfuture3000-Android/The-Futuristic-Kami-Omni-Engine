@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: copilot-scoop
+  namespace: empire-engine
+  labels:
+    app: copilot-scoop
+    component: sweeper
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: copilot-scoop
+  template:
+    metadata:
+      labels:
+        app: copilot-scoop
+        component: sweeper
+    spec:
+      serviceAccountName: empire-service-account
+      containers:
+      - name: copilot-scoop
+        image: empireacr.azurecr.io/copilot-scoop:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: SWEEP_INTERVAL_MS
+          value: "30000"
+        - name: MAX_SWEEP_AMOUNT
+          value: "1000"
+        envFrom:
+        - secretRef:
+            name: empire-secrets
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "empire-secrets"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: empire-service-account
+  namespace: empire-engine
+  labels:
+    azure.workload.identity/use: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: copilot-scoop-service
+  namespace: empire-engine
+spec:
+  selector:
+    app: copilot-scoop
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: ClusterIP

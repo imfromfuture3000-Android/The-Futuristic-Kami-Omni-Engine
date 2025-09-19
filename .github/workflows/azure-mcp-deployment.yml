@@ -1,0 +1,152 @@
+name: Azure MCP Full Deployment
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'  # Every 10 minutes
+  push:
+    branches: [main]
+    paths:
+      - 'azure-mcp-config.json'
+      - 'azure-mcp-server.js'
+      - '.env.azure'
+
+jobs:
+  azure-mcp-deployment:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Azure Resources
+        run: |
+          echo "🔧 Setting up Azure resources..."
+          az group create --name OmegaPrime-RG --location eastus --tags project=OmegaPrime
+
+          # Create Storage Account
+          az storage account create --name ${{ secrets.AZURE_STORAGE_ACCOUNT }} --resource-group OmegaPrime-RG --location eastus --sku Standard_LRS --kind StorageV2
+
+          # Create Key Vault
+          az keyvault create --name ${{ secrets.AZURE_KEYVAULT_NAME }} --resource-group OmegaPrime-RG --location eastus
+
+          # Create Cosmos DB
+          az cosmosdb create --name ${{ secrets.AZURE_COSMOS_ACCOUNT }} --resource-group OmegaPrime-RG --locations regionName=eastus failoverPriority=0
+
+      - name: Start Azure MCP Server
+        run: |
+          echo "🚀 Starting Azure MCP Server..."
+          npm run azure:start &
+          sleep 10
+
+          # Health check
+          curl -f http://localhost:3002/health || exit 1
+
+      - name: Secure Relayer Keys in Key Vault
+        run: |
+          echo "🔐 Securing relayer keys..."
+          curl -X POST http://localhost:3002/keyvault/secret \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "octane-relayer-key",
+              "value": "${{ secrets.OCTANE_KEYPAIR_JSON }}"
+            }'
+
+          curl -X POST http://localhost:3002/keyvault/secret \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "biconomy-api-key",
+              "value": "${{ secrets.BICONOMY_API_KEY }}"
+            }'
+
+      - name: Trigger Sacred Matrix Mutation
+        run: |
+          echo "🧬 Triggering Sacred Matrix mutation..."
+          npm run azure:mutate
+
+      - name: Deploy to Solana via Octane
+        run: |
+          echo "🌐 Deploying to Solana..."
+          node scripts/solana_zero_cost_deploy.js target/deploy/mint_gene.so target/deploy/mint_gene-keypair.json mainnet
+
+      - name: Deploy to SKALE via Biconomy
+        run: |
+          echo "🔗 Deploying to SKALE..."
+          node scripts/skale_mainnet_zero_cost_deploy.js MintGene
+
+      - name: Upload Deployment Report to Azure Storage
+        run: |
+          echo "📤 Uploading deployment report..."
+          curl -X POST http://localhost:3002/storage/upload \
+            -H "Content-Type: application/json" \
+            -d '{
+              "containerName": "deployments",
+              "fileName": "deployment-report-$(date +%s).json",
+              "content": "{\"status\": \"success\", \"timestamp\": \"$(date -Iseconds)\", \"mutations\": \"applied\"}"
+            }'
+
+      - name: Query Mint Analytics from Cosmos DB
+        run: |
+          echo "📊 Querying mint analytics..."
+          curl -X POST http://localhost:3002/cosmos/query \
+            -H "Content-Type: application/json" \
+            -d '{
+              "databaseId": "OmegaPrimeDB",
+              "containerId": "MintEvents",
+              "query": "SELECT * FROM c WHERE c.logicId = 7"
+            }'
+
+      - name: Create Azure Function for Trait Fusion
+        run: |
+          echo "⚡ Creating Azure Function for trait fusion..."
+          curl -X POST http://localhost:3002/functions/create \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "trait-fusion-engine",
+              "runtime": "node",
+              "code": "module.exports = async function (context, req) { context.res = { body: '\''Trait fusion completed'\'' }; }"
+            }'
+
+      - name: Get Azure Monitor Metrics
+        run: |
+          echo "📈 Getting performance metrics..."
+          curl "http://localhost:3002/monitor/metrics?metricNames=Requests,Http5xx"
+
+      - name: Upload Mutation Stats to Storage
+        run: |
+          echo "📊 Uploading mutation stats..."
+          STATS=$(curl -s http://localhost:3002/stats)
+          curl -X POST http://localhost:3002/storage/upload \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"containerName\": \"analytics\",
+              \"fileName\": \"mutation-stats-$(date +%s).json\",
+              \"content\": $STATS
+            }"
+
+      - name: Notification
+        run: |
+          echo "✅ Azure MCP Full Deployment Completed!"
+          echo "🧬 Mutations Applied: $(curl -s http://localhost:3002/stats | jq '.totalMutations')"
+          echo "📊 Sacred Matrix Mutations: $(curl -s http://localhost:3002/stats | jq '.sacredMatrixMutations')"
+          echo "🚀 Deployments Triggered: $(curl -s http://localhost:3002/stats | jq '.deploymentsTriggered')"
+
+      - name: Cleanup
+        run: |
+          echo "🧹 Cleaning up resources..."
+          pkill -f "azure-mcp-server.js" || true

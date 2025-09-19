@@ -1,0 +1,12 @@
+{
+  "Mint Oneirobot": {
+    "prefix": "mintOneirobot",
+    "body": [
+      "// EVM: Skale Mainnet (Addr: 0x1234567890abcdef1234567890abcdef12345678)",
+      "await oneirobotNFT.mintOneirobot('${1:recipient}');",
+      "// Solana Mainnet (ID: Oneir8BotPr0gram1DSynt1cat3M4st3r5)",
+      "await program.methods.mintOneirobot(new BN(${2:id})).accounts({ master, mint, tokenAccount, metadata }).rpc();"
+    ],
+    "description": "Mint Oneirobot NFT on Skale or Solana Mainnet"
+  }
+}

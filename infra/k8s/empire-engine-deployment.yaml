@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: empire-engine
+  namespace: empire-engine
+  labels:
+    app: empire-engine
+    component: profit-engine
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: empire-engine
+  template:
+    metadata:
+      labels:
+        app: empire-engine
+        component: profit-engine
+    spec:
+      serviceAccountName: empire-service-account
+      containers:
+      - name: empire-engine
+        image: empireacr.azurecr.io/empire-engine:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: VAULT_ALLOCATION_PERCENT
+          value: "40"
+        - name: GROWTH_ALLOCATION_PERCENT
+          value: "30"
+        - name: SPECULATIVE_ALLOCATION_PERCENT
+          value: "20"
+        - name: TREASURY_ALLOCATION_PERCENT
+          value: "10"
+        - name: STAKING_ENABLED
+          value: "true"
+        - name: LENDING_ENABLED
+          value: "true"
+        - name: MUTATION_INTERVAL_MS
+          value: "600000"
+        envFrom:
+        - secretRef:
+            name: empire-secrets
+        volumeMounts:
+        - name: secrets-store
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "empire-secrets"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: empire-engine-service
+  namespace: empire-engine
+spec:
+  selector:
+    app: empire-engine
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: ClusterIP

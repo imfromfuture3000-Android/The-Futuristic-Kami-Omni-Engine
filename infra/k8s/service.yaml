@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: empire-loadbalancer
+  namespace: empire-engine
+  labels:
+    app: empire-loadbalancer
+spec:
+  type: LoadBalancer
+  ports:
+  - name: dashboard
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  - name: api
+    port: 8080
+    targetPort: 3000
+    protocol: TCP
+  - name: scoop
+    port: 8081
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: empire-dashboard
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: empire-ingress
+  namespace: empire-engine
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - empire.azure.com
+    secretName: empire-tls-secret
+  rules:
+  - host: empire.azure.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: empire-dashboard-service
+            port:
+              number: 80
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: empire-engine-service
+            port:
+              number: 80
+      - path: /scoop
+        pathType: Prefix
+        backend:
+          service:
+            name: copilot-scoop-service
+            port:
+              number: 80
