@@ -205,7 +205,18 @@ function checkEnvironment() {
   
   // Mask the connection string for security
   const connStr = process.env.POSTGRES_CONN_STRING;
-  const masked = connStr.replace(/(:\/\/)([^:]+):([^@]+)(@)/, '$1***:***$4');
+  let masked;
+  try {
+    const url = new URL(connStr);
+    if (url.username || url.password) {
+      url.username = url.username ? '***' : '';
+      url.password = url.password ? '***' : '';
+    }
+    masked = url.toString();
+  } catch (e) {
+    // Fallback: if parsing fails, do not print credentials
+    masked = connStr.replace(/(:\/\/)([^:]+):([^@]+)(@)/, '$1***:***$4');
+  }
   console.log(`📝 Connection: ${masked}`);
   
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
