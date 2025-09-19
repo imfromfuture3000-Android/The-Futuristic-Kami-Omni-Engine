@@ -31,7 +31,7 @@ pub mod lucid_app {
     pub fn mint_gene(ctx: Context<MintGene>, uri: String, logic_id: u8) -> Result<()> {
         let state = &mut ctx.accounts.state;
         require!(state.allowlist.contains(&ctx.accounts.minter.key()), ErrorCode::Unauthorized);
-        require!(logic_id <= 10, ErrorCode::InvalidLogic);
+    require!(logic_id <= 13, ErrorCode::InvalidLogic);
     
         // Apply Sacred Infinite Earning Logic (see below)
         let multiplier = apply_sacred_logic(logic_id, state.matrix_level);
@@ -72,6 +72,9 @@ pub mod lucid_app {
             8 => fib * 34, // Vesica Piscis: Infinite overlap earnings
             9 => fib * 55, // Torus Field: Cyclical infinite loop
             10 => fib * 89, // Singularity Matrix: Max sacred infinity (owner exclusive)
+            11 => merkaba_yield(fib as u64, level) as u32, // Merkaba Yield Amplifier
+            12 => dao_gated_evolution(fib as u64, level) as u32, // DAO-Gated Evolution
+            13 => time_encoded_mint(Clock::get().unwrap().unix_timestamp as u64) as u32, // Time-Encoded Ritual
             _ => 1,
         }
     }
@@ -80,13 +83,20 @@ pub mod lucid_app {
     pub fn merkaba_yield(base: u64, spin_rate: u8) -> u64 {
         base * (spin_rate as u64).pow(2) + fibonacci(spin_rate as usize) as u64
     }
-    
+
+    // Logic 12: DAO-Gated Evolution
+    pub fn dao_gated_evolution(base: u64, level: u8) -> u64 {
+        // Example: Only allow if minter is in DAO allowlist, and scale by level
+        // (In real use, would check DAO state; here, just scale)
+        base * (level as u64) * 42 // 42: symbolic DAO multiplier
+    }
+
     // Logic 13: Time-Encoded Minting Ritual
     pub fn time_encoded_mint(timestamp: u64) -> u64 {
         let sacred_window = timestamp % 10800; // 3-hour ritual cycle
         sacred_multiplier(sacred_window as u8) as u64
     }
-    
+
     // Helper for time-encoded logic
     fn sacred_multiplier(window: u8) -> u32 {
         // Sacred geometry multiplier based on ritual window
@@ -103,6 +113,12 @@ pub mod lucid_app {
             9 => 89,  // Singularity
             _ => 1,
         }
+    }
+
+    // Trait Fusion Engine (stub)
+    pub fn fuse_traits(_genes: Vec<u8>, _traits: Vec<u8>) -> Vec<u8> {
+        // TODO: Implement trait fusion logic
+        vec![]
     }
 
 }

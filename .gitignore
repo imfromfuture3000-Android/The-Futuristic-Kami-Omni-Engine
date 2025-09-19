@@ -1,4 +1,38 @@
-# Ignore environment files and secrets
+# Helius and relayer secrets
+helius*
+# Ignore environment and secret files
+.env*
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+*.json
+!package.json
+node_modules/
+dist/
+build/
+target/
+coverage/
+*.log
+*.sqlite
+*.db
+*.bak
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+*.envrc
+*.code-workspace
+*.vscode/
+deployment_report.json
+deployment-failure-report.json
+*.local
+*.secret
+*.cache
+*.lock
+*.pyc
+__pycache__/# Ignore environment files and secrets
 .env
 .env.*
 *.env
