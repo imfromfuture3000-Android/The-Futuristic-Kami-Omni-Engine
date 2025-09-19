@@ -1,4 +1,16 @@
 {
+
+  "name": "empire-engine-root",
+  "version": "1.0.0",
+  "description": "Empire Engine database testing utilities",
+  "scripts": {
+    "test-db": "node test-database-connection.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  }
+
   "name": "futuristic-kami-omni-engine",
   "version": "1.0.0",
   "description": "Multi-chain profit optimization engine with MCP server deployment capabilities",
@@ -50,4 +62,5 @@
   ],
   "author": "ImfromFuture",
   "license": "MIT"
+
 }
