@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Empire Dashboard - 2089</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff88;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            text-shadow: 0 0 20px #00ff88;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            color: #4ecdc4;
+            opacity: 0.8;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .metric-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #00ff88;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+
+        .metric-change {
+            font-size: 1rem;
+            color: #ff6b6b;
+        }
+
+        .metric-change.positive {
+            color: #00ff88;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-container h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00ff88;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .service-card {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .service-card h4 {
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+
+        .service-status {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .service-status.active {
+            color: #00ff88;
+        }
+
+        .service-status.inactive {
+            color: #ff6b6b;
+        }
+
+        .alerts-section {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .alerts-section h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+        }
+
+        .alert {
+            background: rgba(255, 107, 107, 0.2);
+            border-left: 4px solid #ff6b6b;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .alert.warning {
+            border-left-color: #ffa726;
+            background: rgba(255, 167, 38, 0.2);
+        }
+
+        .alert.info {
+            border-left-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #00ff88, #4ecdc4);
+            border: none;
+            color: #0a0a0a;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            text-align: center;
+            color: #4ecdc4;
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: #4ecdc4;
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .wealth-streams {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .wealth-stream {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            border: 1px solid #00ff88;
+            min-width: 200px;
+            margin: 10px;
+        }
+
+        .wealth-stream .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .wealth-stream .growth {
+            color: #4ecdc4;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Empire Dashboard</h1>
+            <div class="subtitle">Real-time Wealth Generation & System Monitoring - 2089</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="refreshData()">🔄 Refresh Data</button>
+            <button class="btn" onclick="generateReport()">📊 Generate Report</button>
+            <button class="btn" onclick="optimizeCode()">⚡ Optimize Code</button>
+            <button class="btn" onclick="runSecurityAudit()">🔒 Security Audit</button>
+        </div>
+
+        <div id="loading" class="loading">Loading empire data...</div>
+
+        <div id="dashboard-content" style="display: none;">
+            <div class="wealth-streams" id="wealth-streams">
+                <!-- Wealth streams will be populated by JavaScript -->
+            </div>
+
+            <div class="metrics-grid" id="metrics-grid">
+                <!-- Metrics cards will be populated by JavaScript -->
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Empire Value Growth</h3>
+                    <canvas id="empireChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Performance Indicators</h3>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="services-grid" id="services-grid">
+                <!-- Service status cards will be populated by JavaScript -->
+            </div>
+
+            <div id="alerts-section" class="alerts-section" style="display: none;">
+                <h3>🚨 Active Alerts</h3>
+                <div id="alerts-list">
+                    <!-- Alerts will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="last-updated" id="last-updated">
+            Last updated: Loading...
+        </div>
+    </div>
+
+    <script>
+        let dashboardData = {};
+        let empireChart, performanceChart;
+
+        // Initialize charts
+        function initCharts() {
+            const empireCtx = document.getElementById('empireChart').getContext('2d');
+            empireChart = new Chart(empireCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Empire Value ($)',
+                        data: [],
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#00ff88'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: '#4ecdc4',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 255, 136, 0.2)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#4ecdc4'
+                            },
+                            grid: {
+                                color: 'rgba(0, 255, 136, 0.2)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(performanceCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Optimization Rate', 'Security Score', 'Wealth Velocity', 'Empire Growth'],
+                    datasets: [{
+                        label: 'Performance Metrics',
+                        data: [],
+                        borderColor: '#4ecdc4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        pointBackgroundColor: '#4ecdc4',
+                        pointBorderColor: '#00ff88'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#00ff88'
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            ticks: {
+                                color: '#4ecdc4',
+                                backdropColor: 'transparent'
+                            },
+                            grid: {
+                                color: 'rgba(0, 255, 136, 0.2)'
+                            },
+                            angleLines: {
+                                color: 'rgba(0, 255, 136, 0.2)'
+                            },
+                            pointLabels: {
+                                color: '#00ff88'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/metrics');
+                dashboardData = await response.json();
+                updateDashboard();
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                document.getElementById('loading').textContent = 'Failed to load data. Retrying...';
+                setTimeout(loadDashboardData, 5000);
+            }
+        }
+
+        // Update dashboard UI
+        function updateDashboard() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+
+            updateWealthStreams();
+            updateMetrics();
+            updateCharts();
+            updateServices();
+            updateAlerts();
+            updateLastUpdated();
+        }
+
+        // Update wealth streams
+        function updateWealthStreams() {
+            const container = document.getElementById('wealth-streams');
+            container.innerHTML = '';
+
+            dashboardData.wealthStreams.forEach(stream => {
+                const streamDiv = document.createElement('div');
+                streamDiv.className = 'wealth-stream';
+                streamDiv.innerHTML = `
+                    <div class="name">${stream.name}</div>
+                    <div class="value">${stream.value.toLocaleString()}</div>
+                    <div class="growth">${stream.growth}</div>
+                `;
+                container.appendChild(streamDiv);
+            });
+        }
+
+        // Update metrics grid
+        function updateMetrics() {
+            const container = document.getElementById('metrics-grid');
+            container.innerHTML = '';
+
+            const metrics = [
+                {
+                    title: 'Empire Value',
+                    value: `$${dashboardData.empireMetrics.empireValue?.toLocaleString() || 0}`,
+                    change: '+12.5%'
+                },
+                {
+                    title: 'Active Services',
+                    value: Object.keys(dashboardData.activeServices).length,
+                    change: '+2'
+                },
+                {
+                    title: 'Performance Score',
+                    value: calculatePerformanceScore() + '%',
+                    change: '+5.2%'
+                },
+                {
+                    title: 'Wealth Velocity',
+                    value: `$${dashboardData.performanceIndicators?.wealthVelocity || 0}/day`,
+                    change: '+8.1%'
+                }
+            ];
+
+            metrics.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                card.innerHTML = `
+                    <h3>${metric.title}</h3>
+                    <div class="metric-value">${metric.value}</div>
+                    <div class="metric-change positive">${metric.change}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Update charts
+        function updateCharts() {
+            // Update empire chart with sample data (in real implementation, this would be historical data)
+            const empireValues = [250000, 280000, 310000, 326900];
+            const labels = ['Day 1', 'Day 7', 'Day 14', 'Today'];
+
+            empireChart.data.labels = labels;
+            empireChart.data.datasets[0].data = empireValues;
+            empireChart.update();
+
+            // Update performance chart
+            const performanceData = [
+                dashboardData.performanceIndicators?.optimizationRate || 0,
+                dashboardData.performanceIndicators?.securityScore || 0,
+                dashboardData.performanceIndicators?.wealthVelocity / 100 || 0,
+                dashboardData.performanceIndicators?.empireGrowth || 0
+            ];
+
+            performanceChart.data.datasets[0].data = performanceData;
+            performanceChart.update();
+        }
+
+        // Update services grid
+        function updateServices() {
+            const container = document.getElementById('services-grid');
+            container.innerHTML = '';
+
+            Object.entries(dashboardData.activeServices).forEach(([service, status]) => {
+                const card = document.createElement('div');
+                card.className = 'service-card';
+                card.innerHTML = `
+                    <h4>${service.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</h4>
+                    <div class="service-status ${status === 'active' ? 'active' : 'inactive'}">
+                        ${status === 'active' ? '🟢 Active' : '🔴 Inactive'}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Update alerts
+        function updateAlerts() {
+            const alerts = dashboardData.alerts || [];
+            const alertsSection = document.getElementById('alerts-section');
+            const alertsList = document.getElementById('alerts-list');
+
+            if (alerts.length > 0) {
+                alertsSection.style.display = 'block';
+                alertsList.innerHTML = '';
+
+                alerts.forEach(alert => {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = `alert ${alert.type}`;
+                    alertDiv.innerHTML = `
+                        <strong>${alert.type.toUpperCase()}:</strong> ${alert.message}
+                        <br><small>${new Date(alert.timestamp).toLocaleString()}</small>
+                    `;
+                    alertsList.appendChild(alertDiv);
+                });
+            } else {
+                alertsSection.style.display = 'none';
+            }
+        }
+
+        // Update last updated timestamp
+        function updateLastUpdated() {
+            const timestamp = dashboardData.lastUpdated;
+            document.getElementById('last-updated').textContent =
+                `Last updated: ${new Date(timestamp).toLocaleString()}`;
+        }
+
+        // Calculate performance score
+        function calculatePerformanceScore() {
+            const indicators = dashboardData.performanceIndicators || {};
+            const score = (
+                (parseFloat(indicators.optimizationRate || 0) * 0.3) +
+                (parseFloat(indicators.securityScore || 0) * 0.3) +
+                (parseFloat(indicators.wealthVelocity || 0) / 100 * 0.2) +
+                (parseFloat(indicators.empireGrowth || 0) * 0.2)
+            );
+            return Math.min(Math.round(score), 100);
+        }
+
+        // Control functions
+        async function refreshData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').textContent = 'Refreshing data...';
+            await loadDashboardData();
+        }
+
+        async function generateReport() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    empireValue: data.empireMetrics.empireValue,
+                    activeServices: Object.keys(data.activeServices).length,
+                    performanceScore: calculatePerformanceScore(),
+                    alerts: data.alerts.length
+                };
+
+                console.log('Empire Report:', report);
+                alert('Report generated! Check console for details.');
+            } catch (error) {
+                console.error('Failed to generate report:', error);
+                alert('Failed to generate report');
+            }
+        }
+
+        async function optimizeCode() {
+            const code = prompt('Enter code to optimize:');
+            if (code) {
+                try {
+                    const response = await fetch('/api/optimize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code, target: 'performance' })
+                    });
+                    const result = await response.json();
+                    alert('Code optimized! Check console for details.');
+                    console.log('Optimization result:', result);
+                    await refreshData();
+                } catch (error) {
+                    console.error('Optimization failed:', error);
+                    alert('Optimization failed');
+                }
+            }
+        }
+
+        async function runSecurityAudit() {
+            const code = prompt('Enter code to audit:');
+            if (code) {
+                try {
+                    const response = await fetch('/api/audit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+                    const result = await response.json();
+                    alert('Security audit completed! Check console for details.');
+                    console.log('Audit result:', result);
+                    await refreshData();
+                } catch (error) {
+                    console.error('Audit failed:', error);
+                    alert('Security audit failed');
+                }
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            loadDashboardData();
+
+            // Auto-refresh every 30 seconds
+            setInterval(loadDashboardData, 30000);
+        });
+    </script>
+</body>
+</html>

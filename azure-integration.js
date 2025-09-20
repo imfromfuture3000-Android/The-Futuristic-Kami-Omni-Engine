@@ -28,6 +28,20 @@ class AzureIntegration {
 
   async initialize() {
     try {
+      // Check if Azure credentials are available
+      const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
+      const clientId = process.env.AZURE_CLIENT_ID;
+      const clientSecret = process.env.AZURE_CLIENT_SECRET;
+      const tenantId = process.env.AZURE_TENANT_ID;
+
+      if (!subscriptionId || !clientId || !clientSecret || !tenantId) {
+        console.log('⚠️  Azure credentials not configured - Azure integration disabled');
+        return;
+      }
+
+      this.subscriptionId = subscriptionId;
+      this.resourceGroup = process.env.AZURE_RESOURCE_GROUP || 'Gene_Mint';
+
       // Load configuration
       const fs = require('fs').promises;
       const configPath = './mcp-server-config.json';

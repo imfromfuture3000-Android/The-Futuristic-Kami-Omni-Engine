@@ -33,6 +33,31 @@ class AzureDeployer {
     try {
       console.log('🚀 Starting Azure Resource Deployment for Gene Mint Protocol...');
 
+      // Check if Azure credentials are available
+      const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
+      const clientId = process.env.AZURE_CLIENT_ID;
+      const clientSecret = process.env.AZURE_CLIENT_SECRET;
+      const tenantId = process.env.AZURE_TENANT_ID;
+
+      if (!subscriptionId || !clientId || !clientSecret || !tenantId) {
+        console.log('⚠️  Azure credentials not configured - running in demo mode');
+        await this.runDemoDeployment();
+        return;
+      }
+
+      this.subscriptionId = subscriptionId;
+      this.resourceGroupName = process.env.AZURE_RESOURCE_GROUP || 'Gene_Mint';
+
+      // Initialize clients with proper credentials
+      this.credential = new DefaultAzureCredential();
+      this.clients = {
+        resources: new ResourceManagementClient(this.credential, this.subscriptionId),
+        keyVault: new KeyVaultManagementClient(this.credential, this.subscriptionId),
+        storage: new StorageManagementClient(this.credential, this.subscriptionId),
+        cosmos: new CosmosDBManagementClient(this.credential, this.subscriptionId),
+        functions: new WebSiteManagementClient(this.credential, this.subscriptionId)
+      };
+
       // Create Resource Group
       await this.createResourceGroup();
 
@@ -68,6 +93,69 @@ class AzureDeployer {
       console.error('❌ Deployment failed:', error);
       throw error;
     }
+  }
+
+  async runDemoDeployment() {
+    console.log('🎭 Running Azure Deployment in Demo Mode...');
+
+    // Simulate Azure resource creation
+    console.log('📁 [DEMO] Creating Resource Group: Gene_Mint');
+    await this.delay(1000);
+
+    console.log('🔐 [DEMO] Creating Key Vault: omegaprime-kv');
+    await this.delay(1000);
+
+    console.log('📦 [DEMO] Creating Storage Account: omegaprimestore');
+    await this.delay(1000);
+
+    console.log('🌌 [DEMO] Creating Cosmos DB: OmegaPrimeDB');
+    await this.delay(1000);
+
+    console.log('⚡ [DEMO] Creating Function App: omegaprime-functions');
+    await this.delay(1000);
+
+    // Generate demo deployment report
+    const report = {
+      timestamp: new Date().toISOString(),
+      mode: 'demo',
+      subscriptionId: 'demo-subscription-id',
+      resourceGroup: 'Gene_Mint',
+      location: 'eastus',
+      resources: {
+        keyVault: {
+          name: 'omegaprime-kv',
+          url: 'https://omegaprime-kv.vault.azure.net/',
+          status: 'simulated'
+        },
+        storage: {
+          account: 'omegaprimestore',
+          container: 'deployments',
+          status: 'simulated'
+        },
+        cosmosDb: {
+          account: 'omegaprime-cosmos',
+          database: 'OmegaPrimeDB',
+          container: 'Deployments',
+          status: 'simulated'
+        },
+        functions: {
+          name: 'omegaprime-functions',
+          status: 'simulated'
+        }
+      },
+      status: 'demo_completed'
+    };
+
+    // Save deployment report
+    await fs.writeFile('./azure-deployment-report.json', JSON.stringify(report, null, 2));
+    console.log('✅ Demo Deployment completed successfully!');
+    console.log('📄 Demo deployment report saved to azure-deployment-report.json');
+
+    return report;
+  }
+
+  async delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   async createResourceGroup() {

@@ -1,4 +1,3 @@
-// MUTATED: Implemented design patterns for maintainability
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

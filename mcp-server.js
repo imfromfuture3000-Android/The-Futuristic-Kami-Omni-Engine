@@ -41,17 +41,30 @@ class OmegaPrimeMCPServer {
       this.config = JSON.parse(configData);
 
       // Initialize Azure OpenAI client
-      this.openai = new OpenAI({
-        apiKey: process.env.AZURE_OPENAI_KEY,
-        baseURL: process.env.AZURE_OPENAI_ENDPOINT,
-        defaultHeaders: {
-          'api-key': process.env.AZURE_OPENAI_KEY
-        }
-      });
+      const openaiKey = process.env.AZURE_OPENAI_KEY || process.env.OPENAI_API_KEY;
+      if (openaiKey && openaiKey !== 'your_azure_openai_key_here') {
+        this.openai = new OpenAI({
+          apiKey: openaiKey,
+          baseURL: process.env.AZURE_OPENAI_ENDPOINT,
+          defaultHeaders: {
+            'api-key': openaiKey
+          }
+        });
+        console.log('✅ Azure OpenAI client initialized');
+      } else {
+        console.log('⚠️  Azure OpenAI key not configured - AI features disabled');
+        this.openai = null;
+      }
 
       // Initialize Azure Integration
-      this.azure = new AzureIntegration();
-      await this.azure.initialize();
+      try {
+        this.azure = new AzureIntegration();
+        await this.azure.initialize();
+        console.log('✅ Azure Integration initialized');
+      } catch (error) {
+        console.log('⚠️  Azure Integration failed - running in standalone mode');
+        this.azure = null;
+      }
 
       // Setup middleware
       this.setupMiddleware();
@@ -63,13 +76,15 @@ class OmegaPrimeMCPServer {
       const port = this.config.serverConfig.port || 3001;
       this.app.listen(port, () => {
         console.log(`🚀 OmegaPrime MCP Server with Azure Integration running on port ${port}`);
-        console.log(`🔧 Advanced fixing: ${this.config.mcpServer.advancedFixing.enabled ? 'ENABLED' : 'DISABLED'}`);
-        console.log(`⬆️  Upgrade logic: ${this.config.mcpServer.upgradeLogic.enabled ? 'ENABLED' : 'DISABLED'}`);
-        console.log(`🧬 Mutation engine: ${this.config.mcpServer.mutationEngine.enabled ? 'ENABLED' : 'DISABLED'}`);
-        console.log(`☁️  Azure Integration: ENABLED`);
-        console.log(`🔐 Key Vault: ${this.config.azureIntegration.services.keyVault.name}`);
-        console.log(`📦 Storage: ${this.config.azureIntegration.services.storage.account}`);
-        console.log(`🌌 Cosmos DB: ${this.config.azureIntegration.services.cosmosDb.database}`);
+        console.log(`🔧 Advanced fixing: ${this.config.mcpServer.features?.autoFix ? 'ENABLED' : 'DISABLED'}`);
+        console.log(`⬆️  Upgrade logic: ${this.config.mcpServer.features?.upgrade ? 'ENABLED' : 'DISABLED'}`);
+        console.log(`🧬 Mutation engine: ${this.config.mcpServer.features?.mutation ? 'ENABLED' : 'DISABLED'}`);
+        console.log(`☁️  Azure Integration: ${this.azure ? 'ENABLED' : 'DISABLED'}`);
+        if (this.config.azureIntegration?.services) {
+          console.log(`🔐 Key Vault: ${this.config.azureIntegration.services.keyVault?.name || 'N/A'}`);
+          console.log(`📦 Storage: ${this.config.azureIntegration.services.storage?.account || 'N/A'}`);
+          console.log(`🌌 Cosmos DB: ${this.config.azureIntegration.services.cosmosDb?.database || 'N/A'}`);
+        }
         console.log(`⚡ Functions: ${this.config.azureIntegration.services.functions.name}`);
       });
 

@@ -11,7 +11,7 @@ module.exports = {
       chainId: Number(CHAIN_ID) || 2046399126,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       gas: "auto",
-      gasPrice: 0, // SKALE uses SFUEL (free gas)
+      gasPrice: 1000000000, // 1 gwei - SKALE minimum gas price
     },
   },
   etherscan: {

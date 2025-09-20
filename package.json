@@ -1,16 +1,4 @@
 {
-
-  "name": "empire-engine-root",
-  "version": "1.0.0",
-  "description": "Empire Engine database testing utilities",
-  "scripts": {
-    "test-db": "node test-database-connection.js"
-  },
-  "dependencies": {
-    "pg": "^8.11.3",
-    "dotenv": "^16.3.1"
-  }
-
   "name": "futuristic-kami-omni-engine",
   "version": "1.0.0",
   "description": "Multi-chain profit optimization engine with MCP server deployment capabilities",
@@ -19,13 +7,17 @@
     "start": "node mcp-server.js",
     "server:start": "node mcp-server.js",
     "azure-server:start": "node azure-mcp-server.js",
+    "dashboard:start": "node empire-dashboard.js start",
+    "dashboard:report": "node empire-dashboard.js report",
     "deploy:dashboard": "node dashboard-mainnet-deploy.js deploy",
     "deploy:mainnet": "node dashboard-mainnet-deploy.js mainnet",
     "build:dashboard": "cd dashboard && npm run build",
     "start:dashboard": "cd dashboard && npm start",
     "health:check": "node dashboard-mainnet-deploy.js health",
     "mcp:start-all": "npm run server:start & npm run azure-server:start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js --network skale"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -44,9 +36,12 @@
     "@azure/arm-storage": "^18.1.0",
     "@azure/arm-cosmosdb": "^15.4.0",
     "openai": "^4.24.1",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.0"
   },
   "devDependencies": {
+    "hardhat": "^2.19.0",
     "nodemon": "^3.0.2"
   },
   "engines": {
@@ -62,5 +57,4 @@
   ],
   "author": "ImfromFuture",
   "license": "MIT"
-
 }
