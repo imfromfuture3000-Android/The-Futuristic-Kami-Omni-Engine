@@ -7,6 +7,8 @@ const cron = require('node-cron');
 const axios = require('axios');
 require('dotenv').config();
 
+const GeneSystem = require('./gene-system');
+
 class CopilotScoop {
   constructor() {
     this.app = express();
@@ -14,6 +16,9 @@ class CopilotScoop {
     this.empireEngineUrl = process.env.EMPIRE_ENGINE_URL || 'http://empire-engine-service';
     this.sweepInterval = parseInt(process.env.SWEEP_INTERVAL_MS) || 30000;
     this.maxSweepAmount = parseFloat(process.env.MAX_SWEEP_AMOUNT) || 1000;
+    
+    // Initialize Gene System
+    this.geneSystem = new GeneSystem();
     
     this.logger = winston.createLogger({
       level: 'info',
@@ -89,6 +94,43 @@ class CopilotScoop {
         chains: ['solana', 'ethereum', 'skale']
       });
     });
+
+    // Gene System endpoints
+    this.app.get('/gene/current', (req, res) => {
+      res.json(this.geneSystem.getCurrentGene());
+    });
+
+    this.app.post('/gene/switch/:geneName', (req, res) => {
+      try {
+        const result = this.geneSystem.switchGene(req.params.geneName);
+        this.logger.info('Gene switched', result);
+        res.json({
+          success: true,
+          ...result,
+          response: this.geneSystem.getContextualResponse('gene_switch')
+        });
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
+    });
+
+    this.app.get('/gene/awareness', (req, res) => {
+      res.json(this.geneSystem.getSelfAwareness());
+    });
+
+    this.app.get('/gene/suggestions', (req, res) => {
+      res.json({
+        suggestions: this.geneSystem.suggestNextActions(),
+        gene: this.geneSystem.getCurrentGene().name
+      });
+    });
+
+    this.app.get('/gene/capabilities', (req, res) => {
+      res.json({
+        activeGene: this.geneSystem.activeGene,
+        capabilities: this.geneSystem.genes[this.geneSystem.activeGene].capabilities
+      });
+    });
   }
 
   setupCronJobs() {
@@ -109,7 +151,13 @@ class CopilotScoop {
   }
 
   async performSweep() {
-    this.logger.info('Performing relayer sweep...');
+    // Check for redundancy
+    const redundancyCheck = this.geneSystem.detectRedundancy('sweep_operation', { chains: ['solana', 'ethereum'] });
+    if (redundancyCheck.redundant) {
+      this.logger.warn(redundancyCheck.message);
+    }
+
+    this.logger.info(`${this.geneSystem.getContextualResponse('sweep')} Performing relayer sweep...`);
     
     try {
       const sweepResults = [];
@@ -138,7 +186,14 @@ class CopilotScoop {
       this.lastSweep = new Date();
       this.sweepCount = (this.sweepCount || 0) + sweepResults.length;
 
-      this.logger.info(`Sweep completed: ${sweepResults.length} transactions found`);
+      // Log action in gene system
+      this.geneSystem.logAction('sweep_operation', {
+        chains: chains,
+        resultsFound: sweepResults.length,
+        timestamp: new Date().toISOString()
+      });
+
+      this.logger.info(`Sweep completed: ${sweepResults.length} transactions found - ${this.geneSystem.getContextualResponse('sweep_complete')}`);
       return { sweepsFound: sweepResults.length, sweeps: sweepResults };
 
     } catch (error) {

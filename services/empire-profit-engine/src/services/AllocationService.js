@@ -1,17 +1,44 @@
 const Decimal = require('decimal.js');
 const { logger } = require('../utils/logger');
+const immutableConfig = require('../immutable-earnings-config');
+const ImmutableAuditService = require('./ImmutableAuditService');
 
 class AllocationService {
   constructor(database) {
     this.db = database;
-    
-    // Allocation percentages as specified in requirements
-    this.allocations = {
-      vault: 40,      // 40% to Vault
-      growth: 30,     // 30% to Growth
-      speculative: 20, // 20% to Speculative
-      treasury: 10    // 10% to Treasury
-    };
+
+    // Use immutable configuration instead of hardcoded values
+    this.allocations = immutableConfig.getAllocations();
+
+    // Initialize immutable audit service
+    this.auditService = new ImmutableAuditService(database);
+
+    // Verify configuration integrity on initialization
+    this._verifyImmutableConfig();
+
+    logger.info('AllocationService initialized with immutable configuration', {
+      allocations: this.allocations,
+      configHash: immutableConfig.getDeploymentInfo().contractHash
+    });
+  }  /**
+   * Verify immutable configuration integrity
+   */
+  _verifyImmutableConfig() {
+    const integrityCheck = immutableConfig.verifyIntegrity();
+    if (!integrityCheck.isValid) {
+      throw new Error(`Immutable configuration integrity check failed: ${integrityCheck.error}`);
+    }
+
+    // Validate total allocation
+    const total = Object.values(this.allocations).reduce((sum, val) => sum + val, 0);
+    if (total !== 100) {
+      throw new Error(`Invalid total allocation: ${total}%. Immutable configuration requires 100%`);
+    }
+
+    logger.info('Immutable configuration verified', {
+      totalAllocation: total,
+      configHash: integrityCheck.configHash
+    });
   }
 
   async allocateProfits(sweepData) {
@@ -32,17 +59,26 @@ class AllocationService {
         const sweep = sweepResult.rows[0];
         const totalAmount = new Decimal(sweep.usd_value);
 
+        // Verify immutable configuration before allocation
+        const integrityCheck = immutableConfig.verifyIntegrity();
+        if (!integrityCheck.isValid) {
+          throw new Error(`Cannot allocate profits: Immutable configuration compromised - ${integrityCheck.error}`);
+        }
+
+        // Use immutable calculation method
+        const calculatedAllocations = immutableConfig.calculateAllocations(parseFloat(totalAmount.toString()));
+
         const allocations = [];
 
-        // Create allocations based on percentages
+        // Create allocations based on immutable percentages
         for (const [type, percentage] of Object.entries(this.allocations)) {
-          const allocationAmount = totalAmount.mul(percentage).div(100);
-          
+          const allocationAmount = new Decimal(calculatedAllocations[type]);
+
           const allocation = await client.query(`
             INSERT INTO allocations (
-              sweep_id, allocation_type, percentage, amount, usd_value, 
-              target_strategy, executed
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+              sweep_id, allocation_type, percentage, amount, usd_value,
+              target_strategy, executed, immutable_hash
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
           `, [
             sweep.id,
@@ -51,13 +87,31 @@ class AllocationService {
             allocationAmount.toString(),
             allocationAmount.toString(),
             this.getTargetStrategy(type, sweep.chain),
-            false
+            false,
+            integrityCheck.configHash // Store immutable config hash for audit
           ]);
 
           allocations.push(allocation.rows[0]);
         }
 
-        // Log allocation in audit trail
+        // Create immutable audit entry for the entire allocation operation
+        await this.auditService.auditEarningsOperation(
+          'allocate_profits',
+          sweep.id,
+          {
+            totalAmount: totalAmount.toString(),
+            allocations: allocations.map(a => ({
+              type: a.allocation_type,
+              percentage: a.percentage,
+              amount: a.amount,
+              strategy: a.target_strategy
+            })),
+            sweepChain: sweep.chain,
+            sweepTxHash: sweep.transaction_hash
+          }
+        );
+
+        // Keep legacy audit log for backward compatibility
         await client.query(`
           INSERT INTO audit_log (
             operation, entity_type, entity_id, new_values, user_id
@@ -66,20 +120,25 @@ class AllocationService {
           'allocate_profits',
           'allocation',
           sweep.id,
-          JSON.stringify({ allocations }),
-          'system'
+          JSON.stringify({ allocations, immutableAudit: true }),
+          'immutable-earnings-system'
         ]);
 
-        logger.info('Profit allocation completed', { 
-          sweepId: sweep.id, 
+        logger.info('Profit allocation completed with immutable audit', {
+          sweepId: sweep.id,
           totalAmount: totalAmount.toString(),
-          allocationsCount: allocations.length 
+          allocationsCount: allocations.length,
+          configHash: integrityCheck.configHash
         });
 
         return {
           sweepId: sweep.id,
           totalAmount: totalAmount.toString(),
-          allocations: allocations
+          allocations: allocations,
+          immutableAudit: {
+            configHash: integrityCheck.configHash,
+            verified: integrityCheck.isValid
+          }
         };
       });
     } catch (error) {
@@ -89,23 +148,26 @@ class AllocationService {
   }
 
   getTargetStrategy(allocationType, chain) {
-    const strategies = {
-      vault: 'staking',           // Safe staking for vault
-      growth: 'lending',          // Yield through lending for growth
-      speculative: 'yield_farming', // Higher risk yield farming
-      treasury: 'hold'            // Hold for treasury
-    };
+    try {
+      // Use immutable configuration for strategy selection
+      return immutableConfig.getStrategy(allocationType, chain);
+    } catch (error) {
+      logger.warn('Failed to get strategy from immutable config, using fallback', {
+        allocationType,
+        chain,
+        error: error.message
+      });
 
-    // Chain-specific strategy adjustments
-    if (chain === 'solana' && allocationType === 'vault') {
-      return 'solana_validator_staking';
-    } else if (chain === 'ethereum' && allocationType === 'vault') {
-      return 'lido_staking';
-    } else if (allocationType === 'growth') {
-      return chain === 'ethereum' ? 'aave_lending' : 'compound_lending';
+      // Fallback strategies (these should never be used in production)
+      const fallbackStrategies = {
+        vault: 'staking',
+        growth: 'lending',
+        speculative: 'yield_farming',
+        treasury: 'hold'
+      };
+
+      return fallbackStrategies[allocationType] || 'hold';
     }
-
-    return strategies[allocationType] || 'hold';
   }
 
   async processUnallocatedSweeps() {

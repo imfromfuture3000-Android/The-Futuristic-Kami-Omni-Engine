@@ -11,6 +11,7 @@ const AllocationService = require('./services/AllocationService');
 const StakingService = require('./services/StakingService');
 const MutationService = require('./services/MutationService');
 const { logger } = require('./utils/logger');
+const GeneSystem = require('./gene-system');
 
 class EmpireProfitEngine {
   constructor() {
@@ -23,6 +24,9 @@ class EmpireProfitEngine {
     this.allocationService = new AllocationService(this.db);
     this.stakingService = new StakingService(this.db);
     this.mutationService = new MutationService(this.db);
+    
+    // Initialize Gene System
+    this.geneSystem = new GeneSystem();
     
     this.setupMiddleware();
     this.setupRoutes();
@@ -165,6 +169,36 @@ class EmpireProfitEngine {
       } catch (error) {
         res.status(500).json({ error: error.message });
       }
+    });
+
+    // Gene System endpoints
+    this.app.get('/gene/current', (req, res) => {
+      res.json(this.geneSystem.getCurrentGene());
+    });
+
+    this.app.post('/gene/switch/:geneName', (req, res) => {
+      try {
+        const result = this.geneSystem.switchGene(req.params.geneName);
+        logger.info('Gene switched in Empire Engine', result);
+        res.json({
+          success: true,
+          ...result,
+          response: this.geneSystem.getContextualResponse('gene_switch')
+        });
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
+    });
+
+    this.app.get('/gene/awareness', (req, res) => {
+      res.json(this.geneSystem.getSelfAwareness());
+    });
+
+    this.app.get('/gene/suggestions', (req, res) => {
+      res.json({
+        suggestions: this.geneSystem.suggestNextActions(),
+        gene: this.geneSystem.getCurrentGene().name
+      });
     });
   }
 
