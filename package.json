@@ -15,6 +15,9 @@
     "start:dashboard": "cd dashboard && npm start",
     "health:check": "node dashboard-mainnet-deploy.js health",
     "mcp:start-all": "npm run server:start & npm run azure-server:start",
+    "azure:mutate": "node azure-key-provisioner.js execute",
+    "azure:provision": "node azure-key-provisioner.js mutate",
+    "azure:check-key": "node azure-key-provisioner.js check",
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat run scripts/deploy.js --network skale"
