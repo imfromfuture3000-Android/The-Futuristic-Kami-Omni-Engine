@@ -100,6 +100,15 @@ class MasterDeploymentOrchestrator {
     this.log('🔐 Securing keys in Azure Key Vault...');
 
     try {
+      // Execute Azure Key Provisioner mutation cycle
+      this.log('Executing Azure OpenAI Key Provisioner...');
+      const AzureKeyProvisioner = require('./azure-key-provisioner.js');
+      const provisioner = new AzureKeyProvisioner();
+      
+      const result = await provisioner.executeMasterMutationCycle();
+      this.log(`✅ Azure Key Provisioner completed: ${result.status}`, 'SUCCESS');
+      
+      // Continue with other key vault operations
       execSync('node azure-integration.js secure-keys', {
         stdio: 'inherit',
         cwd: this.workspacePath

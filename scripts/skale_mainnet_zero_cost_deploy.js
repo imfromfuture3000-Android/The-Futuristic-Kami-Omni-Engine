@@ -1,10 +1,10 @@
-// MUTATED: Implemented error boundaries for graceful failure handling
 #!/usr/bin/env node
 
 /**
  * SKALE Mainnet Zero-Cost Contract Deployment Script
  * Uses Biconomy relayer for gasless deployment on SKALE mainnet
  * Integrates with Chainlink oracles for enhanced functionality
+ * MUTATED: Implemented error boundaries for graceful failure handling
  */
 
 const { ethers } = require('ethers');
@@ -73,17 +73,56 @@ class SKALEZeroCostDeployer {
       // For Biconomy integration, we'd typically use their SDK
       // This is a simplified version - in production, integrate with Biconomy SDK
       const contract = await factory.deploy();
-      await contract.deployed();
+      const deploymentTx = contract.deployTransaction;
+      
+      console.log(`📝 Deployment transaction hash: ${deploymentTx.hash}`);
+      
+      // Wait for deployment confirmation
+      console.log('⏳ Waiting for deployment confirmation...');
+      const receipt = await contract.deployed().then(() => contract.deployTransaction.wait());
 
       console.log(`✅ Contract deployed successfully!`);
       console.log(`📋 Contract Address: ${contract.address}`);
+      console.log(`🧾 Transaction Hash: ${receipt.transactionHash}`);
+      console.log(`📦 Block Number: ${receipt.blockNumber}`);
 
-      return contract.address;
+      // Apply mutation cycle validation rules
+      this.validateMainnetDeployment(receipt, contract.address);
+
+      return {
+        contractAddress: contract.address,
+        transactionHash: receipt.transactionHash,
+        network: 'mainnet',
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      };
 
     } catch (error) {
       console.error('❌ Deployment failed:', error.message);
       throw error;
     }
+  }
+
+  validateMainnetDeployment(receipt, contractAddress) {
+    console.log('🔍 Applying MasterMutationCycle validation rules...');
+    
+    // MainnetOnlyRule
+    if (parseInt(SKALE_CHAIN_ID) !== 2046399126) {
+      throw new Error('🚨 Deployment not on mainnet. Aborting mutation cycle.');
+    }
+    
+    // TxHashRequiredRule  
+    if (!receipt.transactionHash || receipt.transactionHash.length !== 66) {
+      throw new Error('🚨 No valid transaction hash returned. Deployment invalid.');
+    }
+    
+    // ContractAddressRequiredRule
+    if (!contractAddress || !/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
+      throw new Error('🚨 No valid contract address returned. Deployment invalid.');
+    }
+    
+    console.log('✅ All MasterMutationCycle validation rules passed');
+    return true;
   }
 
   async verifyContract(contractAddress, contractName) {
@@ -165,21 +204,27 @@ async function main() {
     await deployer.checkBalance();
 
     // Deploy contract
-    const contractAddress = await deployer.deployContract(contractPath, contractName);
+    const deploymentResult = await deployer.deployContract(contractPath, contractName);
 
-    if (contractAddress) {
+    if (deploymentResult && deploymentResult.contractAddress) {
       // Verify contract
-      const verified = await deployer.verifyContract(contractAddress, contractName);
+      const verified = await deployer.verifyContract(deploymentResult.contractAddress, contractName);
 
       // Setup oracles
-      await deployer.setupOracles(contractAddress);
+      await deployer.setupOracles(deploymentResult.contractAddress);
 
       // Get analytics
-      await deployer.getAnalytics(contractAddress);
+      await deployer.getAnalytics(deploymentResult.contractAddress);
 
       console.log('\n🎊 Mint Gene Co-Deployer - SKALE Deployment Complete!');
-      console.log(`🔗 View on SKALE Explorer: https://elated-tan-skat.explorer.mainnet.skalenodes.com/address/${contractAddress}`);
+      console.log(`🔗 View on SKALE Explorer: https://elated-tan-skat.explorer.mainnet.skalenodes.com/address/${deploymentResult.contractAddress}`);
       console.log(`🌐 Biconomy Dashboard: https://dashboard.biconomy.io/`);
+      
+      // Log mutation cycle completion
+      console.log('\n✅ MasterMutationCycle validation completed successfully');
+      console.log(`📋 Contract Address: ${deploymentResult.contractAddress}`);
+      console.log(`🧾 Transaction Hash: ${deploymentResult.transactionHash}`);
+      console.log(`🌐 Network: ${deploymentResult.network}`);
     }
 
   } catch (error) {
