@@ -18,4 +18,4 @@
       "blockstream": {"enabled": true, "baseUrl": "https://blockstream.info/api", "endpoints": ["/address/*", "/tx/*", "/block-height/*", "/unspent/*"], "methods": ["GET"], "rateLimit": {"requestsPerMinute": 50, "burstLimit": 10}},
       "gmail": {"enabled": true, "baseUrl": "https://gmail.googleapis.com", "endpoints": ["/v1/users/me/messages", "/v1/users/me/messages/send", "/v1/users/me/drafts", "/v1/users/me/labels/*", "/oauth2/v2/token"], "methods": ["GET", "POST", "PUT", "PATCH"], "rateLimit": {"requestsPerMinute": 100, "burstLimit": 20}},
       "google_oauth": {"enabled": true, "baseUrl": "https://oauth2.googleapis.com", "endpoints": ["/token", "/revoke", "/userinfo"], "methods": ["POST", "GET"], "rateLimit": {"requestsPerMinute": 50, "burstLimit": 10}},
-      "helius": {"enabled": true, "baseUrl": "https://mainnet.helius-rpc
+      "helius": {"enabled": true, "baseUrl": 
